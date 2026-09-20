@@ -127,8 +127,9 @@ Positive and negative effects.
 | DEC-028 | Close interview; mvp-lock.md is the implementation brief | Workflow | Accepted |
 | DEC-029 | Pragmatic Modular Monolith + Progressive Architecture | Architecture | Accepted |
 | DEC-030 | Separate authorization roles from operational workforce classification | Security | Accepted |
+| DEC-031 | Lock User & Access lifecycle, authority, recovery, and workforce contract | Security | Accepted |
 
-**Interview status:** baseline interview closed 2026-09-02 (DEC-028). Owner/client explicitly revised the role contract on 2026-09-20 (DEC-030), reopening only the user/access questions listed there. Application source still waits for a separate implementation instruction. Architecture style for that work is DEC-029.
+**Interview status:** baseline interview closed 2026-09-02 (DEC-028). DEC-030 revised the role contract and DEC-031 resolved its generic User & Access questions on 2026-09-20. Module-specific permissions and listed implementation-design details remain open. Application source still waits for a separate implementation instruction.
 
 ---
 
@@ -296,7 +297,7 @@ Oracle: those features stay off; first access is a seeder, not self-service auth
 ### Consequences
 
 - No public signup, no self-serve reset, no email-verification gate, no 2FA/passkeys in product scope
-- Password recovery for locked-out staff is not specified (Decision Required if needed later)
+- Password recovery for locked-out staff was not specified here; DEC-031 later resolves `karyawan` recovery and leaves higher-role recovery design open
 - `MustVerifyEmail` / `verified` middleware must not remain a product requirement once code is aligned
 - User & RBAC module is how accounts are added after the seeder
 
@@ -1539,7 +1540,7 @@ This decision supersedes only the **UserRole portion** of DEC-009, including:
 
 DEC-009 remains accepted for `ShipmentStatus`, `PaymentStatus`, and `PaymentMethod`. DEC-005 remains accepted for a string `users.role` plus Laravel Gates/Policies and no Spatie.
 
-### Unresolved business questions
+### Questions open at the time (resolved or narrowed by DEC-031)
 
 1. Can one employee have only one operational classification, or multiple classifications simultaneously?
 2. Is every operational employee required to have a login account?
@@ -1553,12 +1554,14 @@ DEC-009 remains accepted for `ShipmentStatus`, `PaymentStatus`, and `PaymentMeth
 10. What `owner`/`superadmin` protection rules are required?
 11. What password recovery and bootstrap-credential flow is required?
 
+DEC-031 records the approved answers. Module-specific resource permissions and implementation-design details remain open as stated there.
+
 ### Consequences
 
 * Current documentation uses only `superadmin`, `owner`, `admin`, and `karyawan` as authorization roles.
 * `sopir` and `petugas_lapangan` may appear only as operational classifications or in clearly historical text.
 * No `UserRole`, migration, classification schema, Policy, Gate, or Fortify change may be inferred from this documentation-only decision.
-* Until the unresolved permission matrix is approved, documentation must not invent allow/deny rules for `owner`, `admin`, or `karyawan`.
+* DEC-031 now defines generic User & Access boundaries; future module contracts still define module-specific `owner` reads and `karyawan` actions/scopes.
 
 ### Related documents
 
@@ -1570,3 +1573,61 @@ DEC-009 remains accepted for `ShipmentStatus`, `PaymentStatus`, and `PaymentMeth
 * DEC-004
 * DEC-005
 * DEC-009
+
+## DEC-031
+
+Status: Accepted
+
+Category: Security
+
+Date: 2026-09-20
+
+Title: Lock User & Access lifecycle, authority, recovery, and workforce contract
+
+### Context
+
+DEC-030 established the four authorization roles and separated operational function from authorization, but intentionally left lifecycle, generic abilities, recovery, bootstrap security, and workforce cardinality open. The owner/client approved D-01 through D-11 before implementation.
+
+### Decision
+
+**Superadmin:** full-access semantics from DEC-030 remain. Superadmin is not managed in ordinary application UI; provisioning/management uses a secure operational mechanism. The last active superadmin cannot be deactivated, deleted, or demoted.
+
+**Owner:** business oversight only—relevant history, business/operational data, reports, analytics, and monitoring. Owner has no User Management authority and no unrestricted read access to security-sensitive/system data. Exact reads are decided per future module.
+
+**Admin:** may view, create, edit, deactivate, and reactivate `karyawan`. Admin cannot manage `superadmin`, `owner`, or another `admin`.
+
+**Karyawan:** may manage their own non-sensitive profile, change their password while authenticated with current-password verification, and manage their own sessions when an approved UI supports it. They cannot change their role/login identity or delete their account. Business access is limited to explicitly given/assigned resources under future module rules.
+
+**Account lifecycle:** active/deactivated with authorized reactivation. Deactivated accounts cannot act as active application users. No hard delete and no self-delete; preserve historical/audit attribution.
+
+**Authentication and recovery:** login identifier is unique email. There is no public/self-service forgot-password. Normal authenticated password change remains available. Admin may perform internal recovery/reset for `karyawan` only; old passwords are never readable, and recovery is auditable once audit capability exists. Higher-role and emergency superadmin recovery require a secure privileged/operational mechanism whose implementation is not yet approved.
+
+**Bootstrap:** initial `superadmin` uses the approved seeder approach with required environment/deployment secrets. No committed production default or predictable fallback. Exact environment variable names are implementation design.
+
+**Employee and operational function:** every employee represented in the MVP has exactly one User account; no non-login personnel representation is required. This does not automatically approve a separate Employee model/table. Every employee has exactly one operational function. Operational functions are business-managed master data, initially including `sopir` and `petugas_lapangan`, and may grow without changing `UserRole`. Operational function is never an authorization role.
+
+### Consequences
+
+* `owner` cannot manage users; `admin` User Management and recovery stop at `karyawan`.
+* Policies express explicit abilities; no numeric inheritance and no authorization by operational function.
+* Existing starter self-delete, hard-delete behavior, public reset, and unrestricted active-user assumptions are implementation gaps.
+* Operational-function schema is not a fixed enum decision; schema and CRUD lifecycle remain for implementation design.
+
+### Still unresolved
+
+* Exact `owner` read access per future business module
+* Exact `karyawan` Shipment/Assignment actions and resource-assignment rules
+* Employee persistence structure and operational-function schema/table/fields/lifecycle/UI
+* Higher-role forgotten-password recovery and emergency superadmin recovery implementation
+* Detailed audit schema
+
+### Related documents
+
+* PROJECT.md
+* GLOSSARY.md
+* TECH_STACK.md
+* architecture/security.md
+* knowledge/mvp-lock.md
+* DEC-004
+* DEC-005
+* DEC-030

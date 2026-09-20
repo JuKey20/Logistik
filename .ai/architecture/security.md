@@ -19,7 +19,13 @@ Canonical location for authentication, authorization, secrets, and trust boundar
 
 Mechanism: Laravel Fortify + session web; login/logout/sesi only. Canonical: [`../TECH_STACK.md`](../TECH_STACK.md) (DEC-004).
 
-Do not require email verification, 2FA, passkeys, public registration, or self-serve password reset. First user: seeder with the distinct `superadmin` role. Bootstrap credential delivery and password recovery are not yet specified (DEC-030).
+Login identifier: **unique email**. Do not require email verification, 2FA, passkeys, public registration, or public/self-service forgot-password.
+
+An authenticated user may change their own password with current-password verification and normal security validation. This is distinct from forgotten-password recovery.
+
+Internal forgotten-password recovery is privileged: `admin` may reset access for `karyawan` only. An admin may not reset credentials for another `admin`, `owner`, or `superadmin`. Passwords are never readable or displayed. Recovery must be auditable when audit capability exists. Higher-role and emergency superadmin recovery require a secure privileged/operational mechanism whose exact implementation is not yet approved.
+
+The first user is seeded with the distinct `superadmin` role. Bootstrap credentials come from required environment/deployment secrets; no committed default or predictable fallback is allowed. Exact environment variable names remain implementation design (DEC-031).
 
 Protected routes require an authenticated session. Unauthenticated JSON calls must not receive stack traces or model dumps.
 
@@ -41,9 +47,26 @@ Frontend                                →  hide chrome; never the only control
 
 Canonical field: [`../TECH_STACK.md`](../TECH_STACK.md). Authorization roles: `superadmin`, `owner`, `admin`, `karyawan` (DEC-030).
 
-`superadmin` has full access to all application modules, data, and actions. `owner`, `admin`, and `karyawan` require explicit approved abilities and resource scopes; do not infer them from role ordering. Do not implement numeric hierarchy comparison or implicit permission inheritance.
+`superadmin` has full access to all application modules, data, and actions. Do not implement numeric hierarchy comparison or implicit permission inheritance.
 
-`sopir` and `petugas_lapangan` are operational/workforce classifications, not security roles. Their schema, cardinality, account relationship, and effect on shipment/task authorization remain unresolved. Until approved, do not encode those classifications in `users.role` or invent assignment scope rules.
+| Role | Generic User & Access boundary |
+| --- | --- |
+| `superadmin` | Full application access. Not managed through ordinary UI; provisioning/management uses a secure operational mechanism. The last active superadmin cannot be deactivated, deleted, or demoted. |
+| `owner` | Business oversight: relevant history, business/operational data, reports, analytics, and monitoring. No User Management authority. Not unrestricted access to security-sensitive/system data; exact read access belongs to each future module contract. |
+| `admin` | May view, create, edit, deactivate, and reactivate `karyawan`; may perform internal password recovery for `karyawan`. Cannot manage or recover `superadmin`, `owner`, or other `admin` accounts. |
+| `karyawan` | May manage own non-sensitive profile, change own password while authenticated, and manage own sessions when supported. Cannot change own role/login identity or delete own account. Business access is limited to resources explicitly given/assigned by future module rules. |
+
+Detailed Shipment/Assignment actions and assignment scope are not defined here.
+
+## Account lifecycle
+
+Accounts have active/deactivated states. Deactivated accounts are not active application users and must not authenticate or exercise application authorization. An authorized manager may reactivate an account within the boundaries above. Hard delete and self-delete are not allowed; historical/audit attribution must remain intact.
+
+## Employee and operational function boundary
+
+Every employee represented by the MVP has exactly one User account; no non-login personnel model is required. This conceptual 1:1 contract does not by itself approve a separate Employee table/model.
+
+Every employee has exactly one operational function. `sopir` and `petugas_lapangan` are initial business-managed master-data values; future functions may be added without redefining authorization roles. Operational function must never substitute for `UserRole` or server-side authorization. Exact employee persistence and operational-function schema/CRUD lifecycle remain implementation-design decisions.
 
 Canonical enforcement pattern: [`../patterns/policy.md`](../patterns/policy.md)
 

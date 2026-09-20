@@ -110,12 +110,16 @@ Recommended: a relational database with migrations, foreign keys, and indexes. C
 Fitur Fortify yang **dimatikan** (bukan bagian produk):
 
 * Registrasi publik
-* Reset password
+* Public/self-service forgot-password dan reset-password
 * Verifikasi email
 * Two-factor authentication (2FA)
 * Passkeys
 
-Pengguna pertama dibuat lewat **seeder** dengan role `superadmin`. Pengguna berikutnya dibuat lewat modul Manajemen Pengguna — bukan self-signup; role mana yang boleh membuat role lain dan alur bootstrap credential/recovery belum dikunci (DEC-030).
+Login identifier adalah **email unik**. Authenticated user boleh mengganti password sendiri setelah current-password verification dan validasi keamanan normal. Tidak ada public/self-service forgot-password.
+
+Pengguna pertama dibuat lewat **seeder** dengan role `superadmin`. Credential wajib berasal dari environment/deployment secrets, tanpa committed default atau predictable fallback. Exact variable names adalah implementation design. Akun berikutnya dibuat melalui mekanisme yang diizinkan DEC-031, bukan self-signup.
+
+Internal forgotten-password recovery: `admin` hanya boleh mereset akses `karyawan`; password lama tidak pernah dapat dibaca/ditampilkan, dan aksi harus auditable ketika audit capability tersedia. Recovery untuk `admin`, `owner`, dan `superadmin` memakai secure privileged/operational recovery yang detailnya masih Decision Required.
 
 **Perilaku kode saat ini:** `config/fortify.php` masih mengaktifkan registration, resetPasswords, emailVerification, twoFactorAuthentication, passkeys. `routes/web.php` masih `auth` + `verified`. Itu sisa starter, belum disesuaikan di source.
 
@@ -125,9 +129,9 @@ Pengguna pertama dibuat lewat **seeder** dengan role `superadmin`. Pengguna beri
 
 Pembatasan hak akses: **Laravel Gates & Policies** (bawaan). Enforcement wajib di server. UI hanya menyembunyikan tombol; bukan batas keamanan.
 
-Nilai role dikunci ulang oleh DEC-030: `superadmin`, `owner`, `admin`, `karyawan`. `superadmin` adalah role tersendiri dengan full application access; permission `owner`, `admin`, dan `karyawan` belum dikunci dan tidak boleh diinferensikan dari urutan role.
+Nilai role dikunci ulang oleh DEC-030: `superadmin`, `owner`, `admin`, `karyawan`. Lifecycle dan generic User & Access boundary dikunci oleh DEC-031; canonical detail: [`architecture/security.md`](./architecture/security.md). Permission tidak boleh diinferensikan dari urutan role.
 
-`sopir` dan `petugas_lapangan` adalah klasifikasi operasional tenaga kerja, bukan nilai `UserRole`. Bentuk penyimpanan dan kardinalitas klasifikasi belum dipilih.
+`sopir` dan `petugas_lapangan` adalah nilai awal master data fungsi operasional, bukan nilai `UserRole`. Setiap employee mempunyai tepat satu fungsi; exact persistence/master-data design belum dipilih.
 
 **Perilaku kode saat ini:** tabel `users` starter belum punya kolom `role`.
 

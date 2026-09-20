@@ -1,10 +1,10 @@
 # MVP lock (canonical)
 
-> **Panduan implementasi MVP.** Interogasi baseline ditutup 2026-09-02 (DEC-028), lalu kontrak role direvisi secara eksplisit pada 2026-09-20 (DEC-030). Pertanyaan user/access pada DEC-030 masih terbuka. Implementasi source menunggu instruksi berikutnya.
+> **Panduan implementasi MVP.** Interogasi baseline ditutup 2026-09-02 (DEC-028), kontrak role direvisi oleh DEC-030, dan kontrak User & Access dilengkapi oleh DEC-031 pada 2026-09-20. Implementasi source menunggu instruksi berikutnya.
 
 If this file conflicts with starter **code**, the intended product is this file + `PROJECT.md` + `DECISION_LOG.md` + `TECH_STACK.md`. Code is still the starter until implementation.
 
-Full DEC text: [`../DECISION_LOG.md`](../DECISION_LOG.md) (DEC-001 … DEC-029).
+Full DEC text: [`../DECISION_LOG.md`](../DECISION_LOG.md) (DEC-001 … DEC-031).
 
 ---
 
@@ -13,17 +13,23 @@ Full DEC text: [`../DECISION_LOG.md`](../DECISION_LOG.md) (DEC-001 … DEC-029).
 * **Logistik** — jasa pengiriman B2B (perusahaan/cabang) dan B2C (mis. pindah rumah)
 * Internal only; authorization roles: `superadmin`, `owner`, `admin`, `karyawan`
 * `superadmin`: distinct highest role, full application access
-* `owner`, `admin`, `karyawan`: distinct roles; exact permissions and data scopes are not yet locked
-* `sopir` / `petugas_lapangan`: operational workforce classifications, **not** authorization roles; schema and cardinality unresolved
+* `owner`: oversight/read sesuai kontrak modul; **no User Management**
+* `admin`: User Management dan internal recovery untuk `karyawan` saja
+* `karyawan`: own non-sensitive account settings + explicitly assigned business resources
+* Every represented employee has exactly one User and exactly one operational function
+* Operational functions are business-managed master data; initial values `sopir`, `petugas_lapangan`; never authorization roles
 * No customer portal, no native Android/iOS
 * Success: one shipment end-to-end (order → jadwal → bukti kerja → tagihan)
 
 ## Auth & access
 
-* Fortify: login/logout/session only. No register, reset, email verify, 2FA, passkeys
-* First user: seeder role **`superadmin`**; bootstrap credential/recovery flow unresolved
+* Fortify session auth; login identifier = unique email
+* No register/public forgot-password/email verify/2FA/passkeys; authenticated own-password change remains allowed
+* Internal recovery: admin → karyawan only; higher-role/emergency recovery implementation unresolved
+* First user: seeder role **`superadmin`**, required environment/deployment secrets, no predictable fallback
 * `users.role` string + Laravel Gates/Policies — **no Spatie**
 * No numeric role comparison or implicit inheritance; abilities are explicit business rules
+* Account lifecycle: active/deactivated, reactivation allowed by authorized manager, no hard delete/self-delete, preserve attribution
 
 ## Money & payment
 

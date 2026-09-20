@@ -32,11 +32,11 @@ Sistem operasional internal untuk mengelola pengiriman barang: dari permintaan p
 Hanya **tim internal** penyedia jasa pengiriman:
 
 * **Superadmin** (`superadmin`) — role otorisasi tertinggi, terpisah, dengan akses penuh ke seluruh modul, data, dan aksi aplikasi
-* **Owner** (`owner`) — role otorisasi tersendiri di bawah `superadmin`; hak akses detail belum dikunci
-* **Admin** (`admin`) — role otorisasi tersendiri; hak akses detail belum dikunci
-* **Karyawan** (`karyawan`) — role dasar pegawai internal; hak akses dan scope data belum dikunci
+* **Owner** (`owner`) — business oversight: history, data operasional relevan, report, analytics, dan monitoring sesuai kontrak tiap modul; bukan administrator pengguna
+* **Admin** (`admin`) — mengelola akun `karyawan` saja; tidak mengelola `superadmin`, `owner`, atau admin lain
+* **Karyawan** (`karyawan`) — mengelola akun sendiri yang non-sensitive dan hanya mengakses pekerjaan/resource yang secara eksplisit diberikan sesuai kontrak modul
 
-`sopir` dan `petugas_lapangan` adalah **klasifikasi operasional tenaga kerja**, bukan role otorisasi. Keduanya dapat berkaitan dengan dasbor **Tugas Saya** melalui browser HP, tetapi pengaruh klasifikasi terhadap akses tugas belum dikunci (DEC-030).
+`sopir` dan `petugas_lapangan` adalah nilai awal **fungsi operasional karyawan**, bukan role otorisasi. Setiap karyawan mempunyai tepat satu fungsi operasional; daftar fungsi dikelola sebagai master data bisnis dan dapat bertambah. Detail akses **Tugas Saya** tetap ditentukan oleh kontrak modul, bukan oleh fungsi operasional sebagai pengganti Policy (DEC-030, DEC-031).
 
 Pelanggan korporat dan pelanggan individu tidak login dan tidak memakai aplikasi ini.
 
@@ -66,7 +66,7 @@ Dikonfirmasi untuk **produk** (capability / menu). Belum diimplementasi di kode 
 
 | Modul | Fungsi |
 | --- | --- |
-| Autentikasi Pengguna & Keamanan | Login, logout, manajemen sesi saja (DEC-004). Bukan registrasi, reset password, verifikasi email, 2FA, atau passkeys |
+| Autentikasi Pengguna & Keamanan | Login email, logout, sesi, dan authenticated password change. Bukan registrasi atau forgot-password publik, verifikasi email, 2FA, atau passkeys (DEC-004, DEC-031) |
 | Manajemen Penyimpanan Berkas | Unggahan via `Storage` facade; MVP disk `local` / `public` (env). Bukan S3/GCS di MVP (DEC-013) |
 | Antarmuka Responsif | Mobile-web; tidak ada aplikasi Android/iOS terpisah di MVP |
 | Ekspor Data | `maatwebsite/excel`; generate di backend; **sinkron** (direct download). Bukan queue/job (DEC-020) |
@@ -89,12 +89,12 @@ Terkunci: pelanggan korporat/individu; cabang sebagai contoh tujuan B2B; pengiri
 * apakah banyak alamat milik pelanggan atau tercatat pada pengiriman
 * entity Address terpisah
 * aturan ketersediaan sopir/kendaraan (overlap, kalender)
-* apakah satu karyawan hanya memiliki satu klasifikasi operasional atau dapat memiliki beberapa sekaligus
-* apakah setiap tenaga operasional wajib memiliki akun login
-* permission dan scope data eksplisit untuk `owner`, `admin`, dan `karyawan`
-* pengaruh klasifikasi operasional terhadap shipment, assignment, dan **Tugas Saya**
-* aturan create/manage account antar-role, deactivate/delete, dan perlindungan `superadmin`/`owner`
-* alur bootstrap credential dan pemulihan password internal
+* exact read access `owner` pada setiap future business module
+* exact Shipment/Assignment action dan resource-assignment rules untuk `karyawan`
+* persistence structure atribut employee; kontrak 1:1 dengan User tidak otomatis membuat tabel/model Employee
+* schema, nama, field, lifecycle, dan aturan CRUD master data fungsi operasional
+* higher-role forgotten-password recovery dan emergency `superadmin` recovery
+* detailed audit schema untuk perubahan akun dan privileged recovery
 
 Jangan membuat abstraction Address. Jangan menyamakan Customer dengan sender dan destination tanpa keputusan produk.
 
@@ -122,7 +122,7 @@ Sudah dikonfirmasi:
 * Dwibahasa / language switcher (DEC-025)
 * Repository layer, Domain Events/Listeners sebagai default workflow, Queue Worker (DEC-021–024). Event/queue **deferred** sampai side effect async nyata (DEC-029) — bukan larangan seumur hidup produk
 
-Fase interogasi baseline **ditutup** 2026-09-02 (DEC-028). Kontrak role kemudian direvisi oleh requirement owner/client pada 2026-09-20 (DEC-030); pertanyaan akses yang tercantum di atas tetap terbuka. Panduan implementasi: [`knowledge/mvp-lock.md`](./knowledge/mvp-lock.md).
+Fase interogasi baseline **ditutup** 2026-09-02 (DEC-028). Kontrak role direvisi oleh DEC-030 dan kontrak User & Access dilengkapi oleh DEC-031 pada 2026-09-20. Hanya detail modul/desain yang tercantum di atas yang masih terbuka. Panduan implementasi: [`knowledge/mvp-lock.md`](./knowledge/mvp-lock.md).
 
 ---
 
