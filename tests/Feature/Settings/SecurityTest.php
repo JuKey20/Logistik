@@ -3,68 +3,26 @@
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
-use Laravel\Fortify\Features;
 
 test('security page is displayed', function () {
-    $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
-
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-    Features::passkeys([
-        'confirmPassword' => true,
-    ]);
-
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->withSession(['auth.password_confirmed_at' => time()])
-        ->get(route('security.edit'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/security')
-            ->where('canManagePasskeys', true)
-            ->where('passkeys', [])
-            ->where('canManageTwoFactor', true)
-            ->where('twoFactorEnabled', false),
-        );
-});
-
-test('security page requires password confirmation when enabled', function () {
-    $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
-
-    $user = User::factory()->create();
-
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-
-    $response = $this->actingAs($user)
-        ->get(route('security.edit'));
-
-    $response->assertRedirect(route('password.confirm'));
-});
-
-test('security page renders without two factor when feature is disabled', function () {
-    $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
-
-    config(['fortify.features' => []]);
-
-    $user = User::factory()->create();
-
-    $this->actingAs($user)
-        ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('security.edit'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('settings/security')
-            ->where('canManagePasskeys', false)
-            ->where('passkeys', [])
-            ->where('canManageTwoFactor', false)
+            ->has('passwordRules')
+            ->missing('canManagePasskeys')
+            ->missing('passkeys')
+            ->missing('canManageTwoFactor')
             ->missing('twoFactorEnabled')
             ->missing('requiresConfirmation'),
         );
+});
+
+test('guests cannot view security settings', function () {
+    $this->get('/settings/security')->assertRedirect(route('login'));
 });
 
 test('password can be updated', function () {
@@ -102,3 +60,26 @@ test('correct password must be provided to update password', function () {
         ->assertSessionHasErrors('current_password')
         ->assertRedirect(route('security.edit'));
 });
+
+test('guests cannot update a password', function () {
+    $this->put('/settings/password', [
+        'current_password' => 'password',
+        'password' => 'new-password',
+        'password_confirmation' => 'new-password',
+    ])->assertRedirect(route('login'));
+});
+
+test('passkey endpoints are unavailable', function (string $method, string $uri) {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->call($method, $uri)->assertNotFound();
+})->with([
+    ['GET', '/passkeys/login/options'],
+    ['POST', '/passkeys/login'],
+    ['GET', '/passkeys/confirm/options'],
+    ['POST', '/passkeys/confirm'],
+    ['GET', '/user/passkeys/options'],
+    ['POST', '/user/passkeys'],
+    ['DELETE', '/user/passkeys/1'],
+    ['GET', '/.well-known/passkey-endpoints'],
+]);
