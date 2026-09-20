@@ -72,17 +72,27 @@ Definition: Staf penyedia jasa pengiriman yang login dan memakai aplikasi.
 
 Business meaning: Satu-satunya pengguna software. Bukan pelanggan.
 
-System representation: Starter kit memakai model `User` (`app/Models/User.php`). Peran: `users.role` di-cast ke `UserRole` (`owner`, `admin`, `sopir`, `petugas_lapangan`) + Gates/Policies (DEC-005, DEC-009). Kelas enum belum ada di source.
+System representation: Starter kit memakai model `User` (`app/Models/User.php`). Rencana otorisasi: `users.role` di-cast ke `UserRole` (`superadmin`, `owner`, `admin`, `karyawan`) + Gates/Policies (DEC-005, DEC-030). Kelas enum dan kolom role belum ada di source.
 
 Related modules: Manajemen Pengguna & Hak Akses; Autentikasi Pengguna & Keamanan
 
-## Superadmin / Owner
+## Superadmin
 
-Definition: Role akun pertama. **Backing value: `owner`.** "Superadmin" adalah makna bisnis, bukan nilai yang disimpan.
+Definition: Role otorisasi tertinggi. **Backing value: `superadmin`.** Role ini berbeda dari `owner`.
 
-Business meaning: Bootstrap akses. Oracle / pemilik sistem. Membuat pengguna internal berikutnya lewat modul Manajemen Pengguna.
+Business meaning: Mempunyai akses penuh ke seluruh modul, data, dan aksi aplikasi. Bootstrap akun pertama tetap melalui seeder; detail credential dan recovery belum dikunci.
 
-System representation: Seeder (belum ada). `UserRole::Owner`. Gates/Policies (DEC-005, DEC-009).
+System representation: Seeder dan `UserRole::Superadmin` belum dibuat. Enforcement melalui Gates/Policies (DEC-004, DEC-005, DEC-030).
+
+Related modules: Manajemen Pengguna & Hak Akses
+
+## Owner
+
+Definition: Role otorisasi internal dengan backing value `owner`, terpisah dari `superadmin`.
+
+Business meaning: Bukan alias dan bukan nama lain untuk superadmin. Permission, scope data, dan kewenangan pengelolaan pengguna belum dikunci.
+
+System representation: `UserRole::Owner` belum dibuat. Enforcement melalui Gates/Policies (DEC-005, DEC-030).
 
 Related modules: Manajemen Pengguna & Hak Akses
 
@@ -92,12 +102,14 @@ Definition: Fixed set of internal roles. Closed enum, bukan tabel CRUD.
 
 Business meaning:
 
-* `owner` — superadmin / seeder
-* `admin` — staf kantor
-* `sopir` — pengemudi
-* `petugas_lapangan` — petugas di lapangan
+* `superadmin` — role tertinggi; full application access
+* `owner` — role tersendiri; permission belum dikunci
+* `admin` — role tersendiri; permission belum dikunci
+* `karyawan` — role dasar pegawai internal; permission dan scope belum dikunci
 
 System representation: `app/Enums/UserRole.php` (belum dibuat). Kolom `users.role`.
+
+Role adalah konsep **otorisasi/keamanan**. Jangan memakai urutan `superadmin > owner > admin > karyawan` sebagai numeric comparison atau inheritance permission. Selain full access milik `superadmin`, ability setiap role harus dinyatakan eksplisit melalui aturan bisnis dan Policy yang disetujui (DEC-030).
 
 Related modules: Manajemen Pengguna & Hak Akses
 
@@ -181,9 +193,9 @@ Related modules: Harga & Pembayaran
 
 Definition: Staf internal di lapangan (bukan pelanggan) yang mengerjakan tugas pengiriman.
 
-Business meaning: Memakai dasbor **Tugas Saya** lewat browser HP. Bukan pengguna aplikasi native. Role enum: `sopir`, `petugas_lapangan`.
+Business meaning: `sopir` dan `petugas_lapangan` adalah klasifikasi operasional tenaga kerja, bukan role otorisasi. Personel terkait dapat memakai dasbor **Tugas Saya** lewat browser HP; aturan akun, akses tugas, dan scope datanya belum dikunci. Bukan pengguna aplikasi native.
 
-System representation: Belum ada di kode.
+System representation: Belum ada di kode. Belum diputuskan apakah klasifikasi berupa kolom, enum, master data, posisi, kategori, relasi many-to-many, atau entity karyawan terpisah. Kardinalitas satu atau banyak klasifikasi per karyawan juga belum diputuskan (DEC-030).
 
 Related modules: Dasbor Tugas Saya; Penugasan & Ketersediaan; Validasi & Bukti Kerja; Antarmuka Responsif
 

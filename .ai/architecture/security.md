@@ -19,7 +19,7 @@ Canonical location for authentication, authorization, secrets, and trust boundar
 
 Mechanism: Laravel Fortify + session web; login/logout/sesi only. Canonical: [`../TECH_STACK.md`](../TECH_STACK.md) (DEC-004).
 
-Do not require email verification, 2FA, passkeys, public registration, or self-serve password reset. First user: seeder with role `owner` (superadmin).
+Do not require email verification, 2FA, passkeys, public registration, or self-serve password reset. First user: seeder with the distinct `superadmin` role. Bootstrap credential delivery and password recovery are not yet specified (DEC-030).
 
 Protected routes require an authenticated session. Unauthenticated JSON calls must not receive stack traces or model dumps.
 
@@ -39,7 +39,11 @@ Action                                  →  business mutation of allowed fields
 Frontend                                →  hide chrome; never the only control
 ```
 
-Canonical field: [`../TECH_STACK.md`](../TECH_STACK.md). Roles: `owner`, `admin`, `sopir`, `petugas_lapangan` (DEC-009).
+Canonical field: [`../TECH_STACK.md`](../TECH_STACK.md). Authorization roles: `superadmin`, `owner`, `admin`, `karyawan` (DEC-030).
+
+`superadmin` has full access to all application modules, data, and actions. `owner`, `admin`, and `karyawan` require explicit approved abilities and resource scopes; do not infer them from role ordering. Do not implement numeric hierarchy comparison or implicit permission inheritance.
+
+`sopir` and `petugas_lapangan` are operational/workforce classifications, not security roles. Their schema, cardinality, account relationship, and effect on shipment/task authorization remain unresolved. Until approved, do not encode those classifications in `users.role` or invent assignment scope rules.
 
 Canonical enforcement pattern: [`../patterns/policy.md`](../patterns/policy.md)
 

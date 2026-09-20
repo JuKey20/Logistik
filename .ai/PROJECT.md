@@ -31,9 +31,12 @@ Sistem operasional internal untuk mengelola pengiriman barang: dari permintaan p
 
 Hanya **tim internal** penyedia jasa pengiriman:
 
-* **Owner** (`owner`) — akun seeder, makna bisnis superadmin
-* Staf kantor (`admin` dan peran lain yang diizinkan Policy)
-* Sopir (`sopir`) dan petugas lapangan (`petugas_lapangan`) — dasbor **Tugas Saya** lewat browser HP
+* **Superadmin** (`superadmin`) — role otorisasi tertinggi, terpisah, dengan akses penuh ke seluruh modul, data, dan aksi aplikasi
+* **Owner** (`owner`) — role otorisasi tersendiri di bawah `superadmin`; hak akses detail belum dikunci
+* **Admin** (`admin`) — role otorisasi tersendiri; hak akses detail belum dikunci
+* **Karyawan** (`karyawan`) — role dasar pegawai internal; hak akses dan scope data belum dikunci
+
+`sopir` dan `petugas_lapangan` adalah **klasifikasi operasional tenaga kerja**, bukan role otorisasi. Keduanya dapat berkaitan dengan dasbor **Tugas Saya** melalui browser HP, tetapi pengaruh klasifikasi terhadap akses tugas belum dikunci (DEC-030).
 
 Pelanggan korporat dan pelanggan individu tidak login dan tidak memakai aplikasi ini.
 
@@ -76,7 +79,7 @@ Pada scope MVP saat ini, Customer dan Vehicle diperlakukan sebagai data referens
 
 ---
 
-## Unresolved product data (Decision Required)
+## Unresolved product and access data (Decision Required)
 
 Terkunci: pelanggan korporat/individu; cabang sebagai contoh tujuan B2B; pengiriman punya lokasi jemput/tujuan dalam narasi bisnis.
 
@@ -86,6 +89,12 @@ Terkunci: pelanggan korporat/individu; cabang sebagai contoh tujuan B2B; pengiri
 * apakah banyak alamat milik pelanggan atau tercatat pada pengiriman
 * entity Address terpisah
 * aturan ketersediaan sopir/kendaraan (overlap, kalender)
+* apakah satu karyawan hanya memiliki satu klasifikasi operasional atau dapat memiliki beberapa sekaligus
+* apakah setiap tenaga operasional wajib memiliki akun login
+* permission dan scope data eksplisit untuk `owner`, `admin`, dan `karyawan`
+* pengaruh klasifikasi operasional terhadap shipment, assignment, dan **Tugas Saya**
+* aturan create/manage account antar-role, deactivate/delete, dan perlindungan `superadmin`/`owner`
+* alur bootstrap credential dan pemulihan password internal
 
 Jangan membuat abstraction Address. Jangan menyamakan Customer dengan sender dan destination tanpa keputusan produk.
 
@@ -113,7 +122,7 @@ Sudah dikonfirmasi:
 * Dwibahasa / language switcher (DEC-025)
 * Repository layer, Domain Events/Listeners sebagai default workflow, Queue Worker (DEC-021–024). Event/queue **deferred** sampai side effect async nyata (DEC-029) — bukan larangan seumur hidup produk
 
-Fase interogasi placeholder **ditutup** 2026-09-02 (DEC-028). Panduan mutlak: [`knowledge/mvp-lock.md`](./knowledge/mvp-lock.md).
+Fase interogasi baseline **ditutup** 2026-09-02 (DEC-028). Kontrak role kemudian direvisi oleh requirement owner/client pada 2026-09-20 (DEC-030); pertanyaan akses yang tercantum di atas tetap terbuka. Panduan implementasi: [`knowledge/mvp-lock.md`](./knowledge/mvp-lock.md).
 
 ---
 

@@ -14,7 +14,7 @@ Map of this repository versus Oracle decisions. Code wins for current behavior; 
 ## Planned, not in source
 
 * Architecture style DEC-029 (Pragmatic Modular Monolith + Progressive Architecture)
-* `app/Enums/UserRole.php`, `ShipmentStatus.php`, `PaymentStatus.php`, `PaymentMethod.php` (DEC-009)
+* `app/Enums/UserRole.php` (`superadmin`, `owner`, `admin`, `karyawan`; DEC-030), plus `ShipmentStatus.php`, `PaymentStatus.php`, `PaymentMethod.php` (DEC-009)
 * Fortify login-only (DEC-004)
 * `users.role` string + Policies (DEC-005)
 * Product capabilities in `PROJECT.md` — implemented as User / Customer / Vehicle / Shipment workflow grouping, not 11 packages

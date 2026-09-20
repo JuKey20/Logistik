@@ -105,7 +105,7 @@ Positive and negative effects.
 | DEC-006 | Inertia props + useHttp/Form; no TanStack Query | Frontend | Accepted |
 | DEC-007 | HTTP client = Inertia useHttp/Form; no Axios | Frontend | Accepted |
 | DEC-008 | Local runtime = Laragon on Windows, not Sail | Workflow | Accepted |
-| DEC-009 | Lock MVP enums: UserRole, ShipmentStatus, PaymentStatus, PaymentMethod | Backend | Accepted |
+| DEC-009 | Lock MVP enums: UserRole, ShipmentStatus, PaymentStatus, PaymentMethod | Backend | Partially superseded by DEC-030 |
 | DEC-010 | No automatic notifications in MVP; WhatsApp manual + UI pull | Other | Accepted |
 | DEC-011 | Quality gate is only `composer ci:check`; hybrid PHP+Node; no CI split | Workflow | Accepted |
 | DEC-012 | Baseline metadata `1.0.0` / `2026-09-01` is immutable | Workflow | Accepted |
@@ -126,8 +126,9 @@ Positive and negative effects.
 | DEC-027 | APP_NAME is Logistik (for now) | Other | Accepted |
 | DEC-028 | Close interview; mvp-lock.md is the implementation brief | Workflow | Accepted |
 | DEC-029 | Pragmatic Modular Monolith + Progressive Architecture | Architecture | Accepted |
+| DEC-030 | Separate authorization roles from operational workforce classification | Security | Accepted |
 
-**Interview status:** closed 2026-09-02. Do not reopen product questions unless Oracle asks. Application source waits for a separate implementation instruction. Architecture style for that work is DEC-029.
+**Interview status:** baseline interview closed 2026-09-02 (DEC-028). Owner/client explicitly revised the role contract on 2026-09-20 (DEC-030), reopening only the user/access questions listed there. Application source still waits for a separate implementation instruction. Architecture style for that work is DEC-029.
 
 ---
 
@@ -471,7 +472,7 @@ Oracle confirmed the Laragon path.
 
 ## DEC-009
 
-Status: Accepted
+Status: Partially superseded by DEC-030
 
 Category: Backend
 
@@ -1498,3 +1499,74 @@ Oracle approved this style after architecture audit: simplest structure that enf
 - DEC-023
 - DEC-024
 - PROJECT.md
+
+## DEC-030
+
+Status: Accepted
+
+Category: Security
+
+Date: 2026-09-20
+
+Title: Separate authorization roles from operational workforce classification
+
+### Context
+
+DEC-009 replaced the earlier stored value `superadmin` with `owner` and treated `sopir` and `petugas_lapangan` as authorization roles. The owner/client has now explicitly superseded that role model. The application still has no role column, enum, Policies, Gates, or workforce-classification schema, so this decision changes the intended contract only and does not describe implemented behavior.
+
+### Decision
+
+The canonical stored authorization roles are:
+
+* `superadmin` — distinct highest-privilege role with full access to every application module, data set, and action
+* `owner` — distinct role below `superadmin`; exact abilities and data scope are not yet defined
+* `admin` — distinct role; exact abilities and data scope are not yet defined
+* `karyawan` — base internal-employee role; exact abilities and data scope are not yet defined
+
+`superadmin` is not an alias for `owner`. The sequence above expresses business meaning only; implementation must not derive permissions through numeric role comparison or implicit role inheritance. Except for approved full access by `superadmin`, abilities must be defined explicitly and enforced server-side through Laravel Gates/Policies after business approval.
+
+`sopir` and `petugas_lapangan` are no longer authorization roles. They are operational/workforce classifications associated with employees. No storage shape is selected: do not assume a column, enum, master table, position/category table, pivot, cardinality, or separate employee entity.
+
+DEC-004 remains accepted: the first account is bootstrapped through a seeder rather than public registration. Under this revised role model, that highest-access bootstrap account uses `superadmin`; credential delivery and recovery mechanics remain unresolved.
+
+### Supersedes
+
+This decision supersedes only the **UserRole portion** of DEC-009, including:
+
+* `owner` as the stored superadmin value
+* `sopir` and `petugas_lapangan` as roles
+* the consequence that the first seeded user stores `owner`
+
+DEC-009 remains accepted for `ShipmentStatus`, `PaymentStatus`, and `PaymentMethod`. DEC-005 remains accepted for a string `users.role` plus Laravel Gates/Policies and no Spatie.
+
+### Unresolved business questions
+
+1. Can one employee have only one operational classification, or multiple classifications simultaneously?
+2. Is every operational employee required to have a login account?
+3. Can `owner` manage or create another `owner`?
+4. Can `owner` create or manage `admin` and `karyawan`?
+5. What exact permissions does `owner` have below `superadmin`?
+6. What exact permissions does `admin` have?
+7. What can `karyawan` access by default, and with what data scope?
+8. How does operational classification affect shipment, assignment, and task permissions?
+9. What account deactivate/delete rules apply?
+10. What `owner`/`superadmin` protection rules are required?
+11. What password recovery and bootstrap-credential flow is required?
+
+### Consequences
+
+* Current documentation uses only `superadmin`, `owner`, `admin`, and `karyawan` as authorization roles.
+* `sopir` and `petugas_lapangan` may appear only as operational classifications or in clearly historical text.
+* No `UserRole`, migration, classification schema, Policy, Gate, or Fortify change may be inferred from this documentation-only decision.
+* Until the unresolved permission matrix is approved, documentation must not invent allow/deny rules for `owner`, `admin`, or `karyawan`.
+
+### Related documents
+
+* PROJECT.md
+* GLOSSARY.md
+* TECH_STACK.md
+* architecture/security.md
+* knowledge/mvp-lock.md
+* DEC-004
+* DEC-005
+* DEC-009

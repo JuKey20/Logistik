@@ -115,7 +115,7 @@ Fitur Fortify yang **dimatikan** (bukan bagian produk):
 * Two-factor authentication (2FA)
 * Passkeys
 
-Pengguna pertama dibuat lewat **seeder** dengan role `owner` (superadmin). Pengguna berikutnya dibuat oleh tim internal lewat modul Manajemen Pengguna — bukan self-signup.
+Pengguna pertama dibuat lewat **seeder** dengan role `superadmin`. Pengguna berikutnya dibuat lewat modul Manajemen Pengguna — bukan self-signup; role mana yang boleh membuat role lain dan alur bootstrap credential/recovery belum dikunci (DEC-030).
 
 **Perilaku kode saat ini:** `config/fortify.php` masih mengaktifkan registration, resetPasswords, emailVerification, twoFactorAuthentication, passkeys. `routes/web.php` masih `auth` + `verified`. Itu sisa starter, belum disesuaikan di source.
 
@@ -125,7 +125,9 @@ Pengguna pertama dibuat lewat **seeder** dengan role `owner` (superadmin). Pengg
 
 Pembatasan hak akses: **Laravel Gates & Policies** (bawaan). Enforcement wajib di server. UI hanya menyembunyikan tombol; bukan batas keamanan.
 
-Nilai role dikunci (DEC-009): `owner`, `admin`, `sopir`, `petugas_lapangan`. Seeder memakai `owner`.
+Nilai role dikunci ulang oleh DEC-030: `superadmin`, `owner`, `admin`, `karyawan`. `superadmin` adalah role tersendiri dengan full application access; permission `owner`, `admin`, dan `karyawan` belum dikunci dan tidak boleh diinferensikan dari urutan role.
+
+`sopir` dan `petugas_lapangan` adalah klasifikasi operasional tenaga kerja, bukan nilai `UserRole`. Bentuk penyimpanan dan kardinalitas klasifikasi belum dipilih.
 
 **Perilaku kode saat ini:** tabel `users` starter belum punya kolom `role`.
 
@@ -221,18 +223,18 @@ SOP: [`conventions/storage.md`](./conventions/storage.md). Aturan agen: [`.ai/ru
 
 ## Fixed domain values
 
-**Keputusan proyek (DEC-009).** PHP Enum **belum** ada di `app/Enums/` (adaptasi `.ai/` tidak menyentuh source). Saat implementasi, buat backed string enum berikut.
+**Keputusan proyek (DEC-009, role direvisi DEC-030).** PHP Enum **belum** ada di `app/Enums/` (adaptasi `.ai/` tidak menyentuh source). Saat implementasi, buat backed string enum berikut setelah seluruh prerequisite bisnisnya disetujui.
 
 ### `UserRole` → `app/Enums/UserRole.php`
 
 | Case | Value |
 | --- | --- |
-| Owner | `owner` (superadmin; akun seeder) |
+| Superadmin | `superadmin` (full application access; akun seeder) |
+| Owner | `owner` |
 | Admin | `admin` |
-| Sopir | `sopir` |
-| PetugasLapangan | `petugas_lapangan` |
+| Karyawan | `karyawan` |
 
-Kolom: `users.role` (DEC-005). Cast ke `UserRole`.
+Kolom: `users.role` (DEC-005). Cast ke `UserRole`. Jangan implementasikan inheritance/numeric comparison berdasarkan urutan enum. `sopir` dan `petugas_lapangan` tidak termasuk enum ini (DEC-030).
 
 ### `ShipmentStatus` → `app/Enums/ShipmentStatus.php`
 
