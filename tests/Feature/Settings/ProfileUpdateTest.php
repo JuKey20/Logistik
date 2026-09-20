@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Models\User;
 
 test('profile page is displayed', function () {
@@ -60,4 +61,22 @@ test('users cannot delete their own account', function () {
         ])->assertMethodNotAllowed();
 
     expect($user->fresh())->not->toBeNull();
+});
+
+test('profile updates cannot change role or active state', function () {
+    $user = User::factory()->create();
+
+    $this
+        ->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => UserRole::Superadmin->value,
+            'is_active' => false,
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh())
+        ->role->toBe(UserRole::Karyawan)
+        ->is_active->toBeTrue();
 });

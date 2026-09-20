@@ -32,6 +32,17 @@ test('users can not authenticate with invalid password', function () {
     $this->assertGuest();
 });
 
+test('deactivated users cannot authenticate with valid credentials', function () {
+    $user = User::factory()->deactivated()->create();
+
+    $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+});
+
 test('users can request a remembered session', function () {
     $user = User::factory()->create();
 
