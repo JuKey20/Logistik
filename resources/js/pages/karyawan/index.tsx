@@ -106,6 +106,12 @@ export default function KaryawanIndex({ karyawan, filters }: Props) {
                                         scope="col"
                                         className="px-4 py-3 font-medium"
                                     >
+                                        Fungsi operasional
+                                    </th>
+                                    <th
+                                        scope="col"
+                                        className="px-4 py-3 font-medium"
+                                    >
                                         Status
                                     </th>
                                     <th
@@ -127,6 +133,29 @@ export default function KaryawanIndex({ karyawan, filters }: Props) {
                                         </td>
                                         <td className="text-muted-foreground px-4 py-3">
                                             {user.email}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {user.operational_function ? (
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span>
+                                                        {
+                                                            user
+                                                                .operational_function
+                                                                .name
+                                                        }
+                                                    </span>
+                                                    {!user.operational_function
+                                                        .is_active && (
+                                                        <Badge variant="outline">
+                                                            Nonaktif
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <span className="text-muted-foreground">
+                                                    Belum ditentukan
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-4 py-3">
                                             <Badge
@@ -163,7 +192,7 @@ export default function KaryawanIndex({ karyawan, filters }: Props) {
                                 {karyawan.data.length === 0 && (
                                     <tr>
                                         <td
-                                            colSpan={4}
+                                            colSpan={5}
                                             className="px-4 py-12 text-center"
                                         >
                                             <Users className="text-muted-foreground mx-auto size-10" />

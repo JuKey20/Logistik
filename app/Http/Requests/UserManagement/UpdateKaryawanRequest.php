@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class UpdateKaryawanRequest extends FormRequest
 {
@@ -32,9 +33,25 @@ class UpdateKaryawanRequest extends FormRequest
     {
         $karyawan = $this->route('karyawan');
 
-        return $this->profileRules(
-            $karyawan instanceof User ? $karyawan->id : null,
-        );
+        return [
+            ...$this->profileRules(
+                $karyawan instanceof User ? $karyawan->id : null,
+            ),
+            'operational_function_id' => [
+                'required',
+                'integer',
+                Rule::exists('operational_functions', 'id')
+                    ->where(function ($query) use ($karyawan): void {
+                        $query->where(function ($query) use ($karyawan): void {
+                            $query->where('is_active', true);
+
+                            if ($karyawan instanceof User && $karyawan->operational_function_id !== null) {
+                                $query->orWhere('id', $karyawan->operational_function_id);
+                            }
+                        });
+                    }),
+            ],
+        ];
     }
 
     /**
@@ -51,6 +68,9 @@ class UpdateKaryawanRequest extends FormRequest
             'email.email' => 'Format email tidak valid.',
             'email.max' => 'Email maksimal 255 karakter.',
             'email.unique' => 'Email sudah digunakan.',
+            'operational_function_id.required' => 'Fungsi operasional wajib dipilih.',
+            'operational_function_id.integer' => 'Fungsi operasional yang dipilih tidak valid.',
+            'operational_function_id.exists' => 'Fungsi operasional yang dipilih tidak tersedia.',
         ];
     }
 

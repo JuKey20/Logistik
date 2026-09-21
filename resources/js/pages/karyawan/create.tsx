@@ -6,13 +6,26 @@ import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { create, index } from '@/routes/karyawan';
+import { index as operationalFunctionsIndex } from '@/routes/operational-functions';
+import type { OperationalFunction } from '@/types';
 
 export default function CreateKaryawan({
     passwordRules,
+    operationalFunctions,
 }: {
     passwordRules: string;
+    operationalFunctions: OperationalFunction[];
 }) {
+    const hasOperationalFunctions = operationalFunctions.length > 0;
+
     return (
         <>
             <Head title="Tambah karyawan" />
@@ -71,6 +84,62 @@ export default function CreateKaryawan({
                                 </div>
 
                                 <div className="grid gap-2">
+                                    <Label htmlFor="operational_function_id">
+                                        Fungsi operasional
+                                    </Label>
+                                    <Select
+                                        name="operational_function_id"
+                                        required
+                                        disabled={!hasOperationalFunctions}
+                                    >
+                                        <SelectTrigger
+                                            id="operational_function_id"
+                                            className="w-full"
+                                            aria-invalid={
+                                                errors.operational_function_id
+                                                    ? true
+                                                    : undefined
+                                            }
+                                        >
+                                            <SelectValue placeholder="Pilih fungsi operasional" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {operationalFunctions.map(
+                                                (operationalFunction) => (
+                                                    <SelectItem
+                                                        key={
+                                                            operationalFunction.id
+                                                        }
+                                                        value={String(
+                                                            operationalFunction.id,
+                                                        )}
+                                                    >
+                                                        {
+                                                            operationalFunction.name
+                                                        }
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError
+                                        message={errors.operational_function_id}
+                                    />
+                                    {!hasOperationalFunctions && (
+                                        <p className="text-muted-foreground text-sm">
+                                            Belum ada fungsi operasional aktif.{' '}
+                                            <Link
+                                                href={operationalFunctionsIndex()}
+                                                className="text-foreground underline underline-offset-4"
+                                            >
+                                                Kelola fungsi operasional
+                                            </Link>{' '}
+                                            terlebih dahulu.
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="grid gap-2">
                                     <Label htmlFor="password">
                                         Kata sandi awal
                                     </Label>
@@ -104,7 +173,13 @@ export default function CreateKaryawan({
                                     <Button asChild variant="outline">
                                         <Link href={index()}>Batal</Link>
                                     </Button>
-                                    <Button type="submit" disabled={processing}>
+                                    <Button
+                                        type="submit"
+                                        disabled={
+                                            processing ||
+                                            !hasOperationalFunctions
+                                        }
+                                    >
                                         {processing
                                             ? 'Menyimpan...'
                                             : 'Simpan karyawan'}

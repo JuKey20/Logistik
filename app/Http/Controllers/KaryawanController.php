@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\OperationalFunction\ListAssignableOperationalFunctionsAction;
 use App\Actions\UserManagement\CreateKaryawanAction;
 use App\Actions\UserManagement\ListKaryawanAction;
 use App\Actions\UserManagement\UpdateKaryawanAction;
@@ -29,12 +30,13 @@ class KaryawanController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(ListAssignableOperationalFunctionsAction $listOperationalFunctions): Response
     {
         Gate::authorize('create', User::class);
 
         return Inertia::render('karyawan/create', [
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'operationalFunctions' => $listOperationalFunctions->handle(),
         ]);
     }
 
@@ -44,6 +46,7 @@ class KaryawanController extends Controller
             'name' => $request->string('name')->toString(),
             'email' => $request->string('email')->toString(),
             'password' => $request->string('password')->toString(),
+            'operational_function_id' => $request->integer('operational_function_id'),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Karyawan berhasil dibuat.']);
@@ -51,12 +54,19 @@ class KaryawanController extends Controller
         return to_route('karyawan.index');
     }
 
-    public function edit(User $karyawan): Response
-    {
+    public function edit(
+        User $karyawan,
+        ListAssignableOperationalFunctionsAction $listOperationalFunctions,
+    ): Response {
         Gate::authorize('update', $karyawan);
+        $karyawan->load('operationalFunction:id,name,is_active');
 
         return Inertia::render('karyawan/edit', [
-            'karyawan' => $karyawan->only(['id', 'name', 'email', 'is_active']),
+            'karyawan' => [
+                ...$karyawan->only(['id', 'name', 'email', 'is_active', 'operational_function_id']),
+                'operational_function' => $karyawan->operationalFunction?->only(['id', 'name', 'is_active']),
+            ],
+            'operationalFunctions' => $listOperationalFunctions->handle($karyawan->operational_function_id),
         ]);
     }
 
@@ -68,6 +78,7 @@ class KaryawanController extends Controller
         $updateKaryawan->handle($karyawan, [
             'name' => $request->string('name')->toString(),
             'email' => $request->string('email')->toString(),
+            'operational_function_id' => $request->integer('operational_function_id'),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Data karyawan berhasil diperbarui.']);

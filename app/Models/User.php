@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -23,6 +24,8 @@ use Illuminate\Support\Carbon;
  * @property string|null $remember_token
  * @property UserRole $role
  * @property bool $is_active
+ * @property int|null $operational_function_id
+ * @property-read OperationalFunction|null $operationalFunction
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -32,6 +35,14 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * @return BelongsTo<OperationalFunction, $this>
+     */
+    public function operationalFunction(): BelongsTo
+    {
+        return $this->belongsTo(OperationalFunction::class);
+    }
 
     /**
      * @param  Builder<User>  $query

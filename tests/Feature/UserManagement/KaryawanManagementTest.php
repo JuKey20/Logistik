@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\OperationalFunction;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Support\Facades\Hash;
@@ -38,7 +39,9 @@ test('index contains only karyawan and exposes no authentication secrets', funct
             ->component('karyawan/index')
             ->has('karyawan.data', 2)
             ->has('karyawan.data.0', fn (Assert $user) => $user
-                ->hasAll(['id', 'name', 'email', 'is_active'])
+                ->hasAll(['id', 'name', 'email', 'is_active', 'operational_function_id', 'operational_function'])
+                ->where('operational_function_id', null)
+                ->where('operational_function', null)
                 ->missingAll(['password', 'remember_token', 'two_factor_secret'])));
 });
 
@@ -99,6 +102,7 @@ test('owner and karyawan cannot open the create karyawan page', function (string
 
 test('admin and superadmin can create only active karyawan', function (string $actorState) {
     $actor = User::factory()->{$actorState}()->create();
+    $operationalFunction = OperationalFunction::factory()->active()->create();
 
     $this->actingAs($actor)
         ->post('/karyawan', [
@@ -106,6 +110,7 @@ test('admin and superadmin can create only active karyawan', function (string $a
             'email' => 'baru@example.com',
             'password' => 'Initial-Password-2026!',
             'password_confirmation' => 'Initial-Password-2026!',
+            'operational_function_id' => $operationalFunction->id,
             'role' => UserRole::Superadmin->value,
             'is_active' => false,
         ])
@@ -197,15 +202,18 @@ test('create applies the application password requirements', function () {
 
 test('admin can edit a karyawan without changing protected fields', function () {
     $admin = User::factory()->admin()->create();
+    $operationalFunction = OperationalFunction::factory()->active()->create();
     $karyawan = User::factory()->karyawan()->create([
         'email' => 'lama@example.com',
         'password' => 'Original-Password-2026!',
+        'operational_function_id' => $operationalFunction->id,
     ]);
 
     $this->actingAs($admin)
         ->patch("/karyawan/{$karyawan->id}", [
             'name' => 'Nama Diperbarui',
             'email' => 'baru@example.com',
+            'operational_function_id' => $operationalFunction->id,
             'password' => 'Changed-Password-2026!',
             'role' => UserRole::Superadmin->value,
             'is_active' => false,
@@ -247,12 +255,14 @@ test('owner and karyawan cannot open a karyawan edit page', function (string $ac
 
 test('superadmin can edit a karyawan through the ordinary flow', function () {
     $superadmin = User::factory()->superadmin()->create();
-    $karyawan = User::factory()->karyawan()->create();
+    $operationalFunction = OperationalFunction::factory()->active()->create();
+    $karyawan = User::factory()->karyawan()->for($operationalFunction)->create();
 
     $this->actingAs($superadmin)
         ->patch("/karyawan/{$karyawan->id}", [
             'name' => 'Diperbarui Superadmin',
             'email' => $karyawan->email,
+            'operational_function_id' => $operationalFunction->id,
         ])
         ->assertRedirect('/karyawan');
 
@@ -287,13 +297,15 @@ test('ordinary edit route does not resolve non-karyawan targets', function (stri
 
 test('update validates email uniqueness while ignoring the target karyawan', function () {
     $admin = User::factory()->admin()->create();
-    $karyawan = User::factory()->karyawan()->create(['email' => 'sendiri@example.com']);
+    $operationalFunction = OperationalFunction::factory()->active()->create();
+    $karyawan = User::factory()->karyawan()->for($operationalFunction)->create(['email' => 'sendiri@example.com']);
     User::factory()->karyawan()->create(['email' => 'lain@example.com']);
 
     $this->actingAs($admin)
         ->patch("/karyawan/{$karyawan->id}", [
             'name' => $karyawan->name,
             'email' => 'lain@example.com',
+            'operational_function_id' => $operationalFunction->id,
         ])
         ->assertSessionHasErrors(['email' => 'Email sudah digunakan.']);
 
@@ -301,6 +313,7 @@ test('update validates email uniqueness while ignoring the target karyawan', fun
         ->patch("/karyawan/{$karyawan->id}", [
             'name' => $karyawan->name,
             'email' => 'sendiri@example.com',
+            'operational_function_id' => $operationalFunction->id,
         ])
         ->assertSessionHasNoErrors();
 });

@@ -3,6 +3,8 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KaryawanStatusController;
+use App\Http\Controllers\OperationalFunctionController;
+use App\Http\Controllers\OperationalFunctionStatusController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +25,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('karyawan/{karyawan}/reactivate', [KaryawanStatusController::class, 'reactivate'])
         ->name('karyawan.reactivate');
     Route::resource('karyawan', KaryawanController::class)
+        ->except(['show', 'destroy']);
+
+    Route::patch('operational-functions/{operational_function}/deactivate', [OperationalFunctionStatusController::class, 'deactivate'])
+        ->name('operational-functions.deactivate');
+    Route::patch('operational-functions/{operational_function}/reactivate', [OperationalFunctionStatusController::class, 'reactivate'])
+        ->name('operational-functions.reactivate');
+    Route::resource('operational-functions', OperationalFunctionController::class)
+        ->parameters(['operational-functions' => 'operational_function'])
         ->except(['show', 'destroy']);
 });
 

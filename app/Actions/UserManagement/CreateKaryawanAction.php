@@ -8,7 +8,7 @@ use App\Models\User;
 final class CreateKaryawanAction
 {
     /**
-     * @param  array{name: string, email: string, password: string}  $data
+     * @param  array{name: string, email: string, password: string, operational_function_id: int}  $data
      */
     public function handle(array $data): User
     {
@@ -21,6 +21,7 @@ final class CreateKaryawanAction
         $karyawan->forceFill([
             'role' => UserRole::Karyawan,
             'is_active' => true,
+            'operational_function_id' => $data['operational_function_id'],
         ]);
         $karyawan->save();
 

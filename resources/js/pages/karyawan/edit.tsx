@@ -6,10 +6,23 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { index } from '@/routes/karyawan';
-import type { Karyawan } from '@/types';
+import type { Karyawan, OperationalFunction } from '@/types';
 
-export default function EditKaryawan({ karyawan }: { karyawan: Karyawan }) {
+export default function EditKaryawan({
+    karyawan,
+    operationalFunctions,
+}: {
+    karyawan: Karyawan;
+    operationalFunctions: OperationalFunction[];
+}) {
     return (
         <>
             <Head title={`Edit ${karyawan.name}`} />
@@ -77,6 +90,74 @@ export default function EditKaryawan({ karyawan }: { karyawan: Karyawan }) {
                                         autoComplete="username"
                                     />
                                     <InputError message={errors.email} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="operational_function_id">
+                                        Fungsi operasional
+                                    </Label>
+                                    <Select
+                                        name="operational_function_id"
+                                        required
+                                        defaultValue={
+                                            karyawan.operational_function_id
+                                                ? String(
+                                                      karyawan.operational_function_id,
+                                                  )
+                                                : undefined
+                                        }
+                                    >
+                                        <SelectTrigger
+                                            id="operational_function_id"
+                                            className="w-full"
+                                            aria-invalid={
+                                                errors.operational_function_id
+                                                    ? true
+                                                    : undefined
+                                            }
+                                        >
+                                            <SelectValue placeholder="Pilih fungsi operasional" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {operationalFunctions.map(
+                                                (operationalFunction) => (
+                                                    <SelectItem
+                                                        key={
+                                                            operationalFunction.id
+                                                        }
+                                                        value={String(
+                                                            operationalFunction.id,
+                                                        )}
+                                                    >
+                                                        {
+                                                            operationalFunction.name
+                                                        }
+                                                        {!operationalFunction.is_active &&
+                                                            ' (nonaktif — dipertahankan)'}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError
+                                        message={errors.operational_function_id}
+                                    />
+                                    {karyawan.operational_function &&
+                                        !karyawan.operational_function
+                                            .is_active && (
+                                            <p className="text-muted-foreground text-sm">
+                                                Assignment nonaktif ini boleh
+                                                dipertahankan. Jika diganti,
+                                                pilih fungsi yang aktif.
+                                            </p>
+                                        )}
+                                    {!karyawan.operational_function && (
+                                        <p className="text-muted-foreground text-sm">
+                                            Data lama ini belum memiliki fungsi
+                                            operasional. Pilih satu sebelum
+                                            menyimpan perubahan.
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-col-reverse gap-2 border-t pt-5 sm:flex-row sm:justify-end">

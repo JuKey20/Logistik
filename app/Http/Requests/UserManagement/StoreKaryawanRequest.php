@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class StoreKaryawanRequest extends FormRequest
 {
@@ -31,6 +32,12 @@ class StoreKaryawanRequest extends FormRequest
         return [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
+            'operational_function_id' => [
+                'required',
+                'integer',
+                Rule::exists('operational_functions', 'id')
+                    ->where(fn ($query) => $query->where('is_active', true)),
+            ],
         ];
     }
 
@@ -57,6 +64,9 @@ class StoreKaryawanRequest extends FormRequest
             'password.numbers' => 'Kata sandi harus mengandung angka.',
             'password.symbols' => 'Kata sandi harus mengandung simbol.',
             'password.uncompromised' => 'Kata sandi pernah bocor dan tidak boleh digunakan.',
+            'operational_function_id.required' => 'Fungsi operasional wajib dipilih.',
+            'operational_function_id.integer' => 'Fungsi operasional yang dipilih tidak valid.',
+            'operational_function_id.exists' => 'Fungsi operasional yang dipilih tidak tersedia.',
         ];
     }
 

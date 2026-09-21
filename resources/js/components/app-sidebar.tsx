@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, Users } from 'lucide-react';
+import {
+    BookOpen,
+    BriefcaseBusiness,
+    FolderGit2,
+    LayoutGrid,
+    Users,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,6 +21,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as karyawanIndex } from '@/routes/karyawan';
+import { index as operationalFunctionsIndex } from '@/routes/operational-functions';
 import type { NavItem } from '@/types';
 
 const footerNavItems: NavItem[] = [
@@ -45,6 +52,11 @@ export function AppSidebar() {
                       title: 'Karyawan',
                       href: karyawanIndex(),
                       icon: Users,
+                  },
+                  {
+                      title: 'Fungsi operasional',
+                      href: operationalFunctionsIndex(),
+                      icon: BriefcaseBusiness,
                   },
               ]
             : []),

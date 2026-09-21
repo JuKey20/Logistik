@@ -14,9 +14,10 @@ final class ListKaryawanAction
     {
         return User::query()
             ->matchingKaryawan($search)
+            ->with('operationalFunction:id,name,is_active')
             ->orderBy('name')
             ->orderBy('id')
-            ->paginate(15, ['id', 'name', 'email', 'is_active'])
+            ->paginate(15, ['id', 'name', 'email', 'is_active', 'operational_function_id'])
             ->withQueryString();
     }
 }
